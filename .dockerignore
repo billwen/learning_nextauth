@@ -1,0 +1,14 @@
+Dockerfile
+docker-compose.yml
+.github
+.husky
+.idea
+.next
+node_modules
+.dockerignore
+.env
+.eslintrc.json
+.gitignore
+.prettierignore
+.prettierrc
+components.json
