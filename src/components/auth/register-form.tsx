@@ -39,12 +39,12 @@ export function RegisterForm() {
     startTransition(() => {
       saRegister(values)
         .then((data) => {
-          if (data.error) {
+          if (data?.error) {
             setError(data.error);
             setSuccess(undefined);
           } else {
             setError(undefined);
-            setSuccess(data.success);
+            setSuccess(data?.success);
           }
         });
     });
