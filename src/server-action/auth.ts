@@ -8,6 +8,7 @@ import { PrismaAdapter } from '@auth/prisma-adapter';
 import { db } from '@/lib/db';
 import { LoginData, LoginDataSchema } from '@/schema';
 import { getUserByEmail } from '@/data-service/user-data-service';
+import { AuthConfig } from '@auth/core';
 
 /**
  * Authorize the user with the provided credentials.
@@ -17,6 +18,7 @@ import { getUserByEmail } from '@/data-service/user-data-service';
  */
 async function credentialsAuthorize(
   credentials: Partial<Record<string, unknown>>,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   request: Request,
 ): Promise<User | null> {
   const validateFields = LoginDataSchema.safeParse(credentials);
@@ -41,12 +43,33 @@ async function credentialsAuthorize(
   return user;
 }
 
+type Callbacks = Required<NonNullable<AuthConfig['callbacks']>>;
+type JwtFunc = Callbacks['jwt'];
+type SessionFunc = Callbacks['session'];
+
+const jwtCallback: JwtFunc = async (params) => {
+  console.log('jwt callback - ', params);
+  return params.token;
+};
+
+const sessionCallback: SessionFunc = async ({ token, session }) => {
+  if (token.sub && session.user) {
+    session.user.id = token.sub;
+  }
+
+  return session;
+};
+
 export const {
   handlers: { GET, POST },
   auth,
   signIn,
   signOut,
 } = NextAuth({
+  callbacks: {
+    jwt: jwtCallback,
+    session: sessionCallback,
+  },
   adapter: PrismaAdapter(db),
   session: { strategy: 'jwt' },
   providers: [

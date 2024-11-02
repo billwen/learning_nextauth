@@ -27,7 +27,6 @@ export const saRegister = async (data: RegisterData) => {
   await db.user.create({
     data: {
       email,
-      salt,
       password: hashed,
       name,
     },

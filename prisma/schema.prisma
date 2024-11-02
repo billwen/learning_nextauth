@@ -13,6 +13,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  ADMIN
+  USER
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -20,11 +25,11 @@ model User {
   emailVerified DateTime?
   image         String?
 
-  salt     String?
   password String?
 
   accounts      Account[]
   sessions      Session[]
+  role          UserRole        @default(USER)
   // Optional for WebAuthn support
   Authenticator Authenticator[]
 

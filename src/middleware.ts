@@ -22,12 +22,13 @@ import { apiAuthPrefix, authRoutes, DEFAULT_LOGGEDIN_REDIRECT, LOGIN_PAGE_URL, p
 
 export default auth((req) => {
   // req.auth
+  console.log('auth middleware - ', req.nextUrl.pathname);
   const { nextUrl } = req;
   const isAuthenticated = !!req.auth;
 
   const isApiAuthRoute = nextUrl.pathname.startsWith(apiAuthPrefix);
   if (isApiAuthRoute) {
-    return NextResponse.next();
+    return;
   }
 
   const isAuthRoute = authRoutes.includes(nextUrl.pathname);
@@ -35,16 +36,16 @@ export default auth((req) => {
     if (isAuthenticated) {
       return NextResponse.redirect(new URL(DEFAULT_LOGGEDIN_REDIRECT, nextUrl));
     }
-    return NextResponse.next();
+    return;
   }
 
   const isPublicRoute = publicRoutes.includes(nextUrl.pathname);
   if (isPublicRoute) {
-    return NextResponse.next();
+    return;
   }
 
   if (isAuthenticated) {
-    return NextResponse.next();
+    return;
   }
 
   return NextResponse.redirect(new URL(LOGIN_PAGE_URL, nextUrl));
