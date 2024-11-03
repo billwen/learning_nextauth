@@ -28,7 +28,7 @@ export default auth((req) => {
 
   const isApiAuthRoute = nextUrl.pathname.startsWith(apiAuthPrefix);
   if (isApiAuthRoute) {
-    return;
+    return NextResponse.next();
   }
 
   const isAuthRoute = authRoutes.includes(nextUrl.pathname);
@@ -36,19 +36,19 @@ export default auth((req) => {
     if (isAuthenticated) {
       return NextResponse.redirect(new URL(DEFAULT_LOGGEDIN_REDIRECT, nextUrl));
     }
-    return;
+    return NextResponse.next();
   }
 
   const isPublicRoute = publicRoutes.includes(nextUrl.pathname);
   if (isPublicRoute) {
-    return;
+    return NextResponse.next();
   }
 
   if (isAuthenticated) {
-    return;
+    return NextResponse.next();
   }
 
-  return NextResponse.redirect(new URL(LOGIN_PAGE_URL, nextUrl));
+  return NextResponse.redirect(new URL(LOGIN_PAGE_URL, nextUrl), 302);
 });
 
 export const config = {

@@ -4,9 +4,11 @@ import { LoginData, LoginDataSchema } from '@/schema';
 import { signIn } from '@/server-action/auth';
 import { DEFAULT_LOGGEDIN_REDIRECT } from '@/routes';
 import { AuthError } from 'next-auth';
+import { getUserByEmail } from '@/data-service/user-data-service';
+import { generateVerificationToken } from '@/lib/tokens';
 
 /**
- * Server action to login a user.
+ * Server action to log in a user.
  * @param data
  *
  * @returns An object with an error message if the login fails.
@@ -21,6 +23,20 @@ export const saLogin = async (data: LoginData) => {
   }
 
   const { email, password } = validateFields.data as LoginData;
+
+  const existingUser = await getUserByEmail(email);
+  if (!existingUser || !existingUser.email || !existingUser.password) {
+    // When a user doesn't have a password, it means they signed up with a social provider
+    return { error: 'Email does not exist!' };
+  }
+
+  // If the user hasn't verified their email, send a new verification email
+  if (!existingUser.emailVerified) {
+    const verificationToken = await generateVerificationToken(existingUser.email);
+    console.log(`Verification token: ${verificationToken}`);
+    return { success: 'Confirmation email sent!' };
+  }
+
   try {
     await signIn('credentials', { email, password, redirectTo: DEFAULT_LOGGEDIN_REDIRECT });
     return { success: 'User Logged In!' };

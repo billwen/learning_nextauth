@@ -1,14 +1,39 @@
 import * as bcrypt from 'bcryptjs';
-import NextAuth from 'next-auth';
+import NextAuth, { DefaultSession } from 'next-auth';
 import GitHub from 'next-auth/providers/github';
 import Credentials from 'next-auth/providers/credentials';
 
-import type { User } from '@prisma/client';
+import type { User, UserRole } from '@prisma/client';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import { db } from '@/lib/db';
 import { LoginData, LoginDataSchema } from '@/schema';
-import { getUserByEmail } from '@/data-service/user-data-service';
+import { getUserByEmail, getUserById } from '@/data-service/user-data-service';
 import { AuthConfig } from '@auth/core';
+import Google from '@auth/core/providers/google';
+
+/**
+ * The offical solution to extend the session object.
+ * https://authjs.dev/getting-started/typescript
+ * DOSN'T WORK
+ */
+
+// declare module "@auth/core" {
+//   interface Session {
+//     user: {
+//       role: "ADMIN" | "USER";
+//     } & DefaultSession['user'];
+//   }
+// }
+
+export type ExtendedUser = {
+  role: UserRole;
+} & DefaultSession['user'];
+
+declare module 'next-auth' {
+  interface Session {
+    user: ExtendedUser;
+  }
+}
 
 /**
  * Authorize the user with the provided credentials.
@@ -46,15 +71,61 @@ async function credentialsAuthorize(
 type Callbacks = Required<NonNullable<AuthConfig['callbacks']>>;
 type JwtFunc = Callbacks['jwt'];
 type SessionFunc = Callbacks['session'];
+type SignInFunc = Callbacks['signIn'];
+
+type Events = Required<NonNullable<AuthConfig['events']>>;
+type SignInEvent = Events['signIn'];
+type LinkAccountEvent = Events['linkAccount'];
+
+const linkAccountEvent: LinkAccountEvent = async ({ user, account }) => {
+  console.log(`link account event - ${JSON.stringify(user)} - ${JSON.stringify(account)}`);
+  await db.user.update({
+    where: { id: user.id },
+    data: {
+      emailVerified: new Date(),
+    },
+  });
+  return;
+};
+
+const signInCallback: SignInFunc = async ({ user }) => {
+  console.log(`sign in callback - ${JSON.stringify(user)}`);
+  // const existingUser = await getUserById(user.id);
+  // if (!existingUser || !existingUser.emailVerified) {
+  //   return false;
+  // }
+
+  return true;
+};
 
 const jwtCallback: JwtFunc = async (params) => {
-  console.log('jwt callback - ', params);
-  return params.token;
+  console.log(`jwt callback - ${JSON.stringify(params)} `);
+  const token = params.token;
+  if (!token.sub) {
+    // User is logged out
+    return token;
+  }
+
+  const existingUser = await getUserById(token.sub);
+  if (!existingUser) {
+    // User not found
+    return token;
+  }
+
+  token.role = existingUser.role;
+  return token;
 };
 
 const sessionCallback: SessionFunc = async ({ token, session }) => {
+  console.log(`session callback - ${JSON.stringify(token)}`);
   if (token.sub && session.user) {
+    // attach the user id to the session
     session.user.id = token.sub;
+  }
+
+  if (token.role && session.user) {
+    // Extend the user role to the session
+    session.user.role = token.role as UserRole;
   }
 
   return session;
@@ -66,16 +137,33 @@ export const {
   signIn,
   signOut,
 } = NextAuth({
+  pages: {
+    signIn: '/auth/login',
+    signOut: '/auth/login',
+    error: '/auth/error',
+    newUser: '/auth/new',
+  },
+  events: {
+    linkAccount: linkAccountEvent,
+  },
   callbacks: {
     jwt: jwtCallback,
     session: sessionCallback,
+    signIn: signInCallback,
   },
   adapter: PrismaAdapter(db),
   session: { strategy: 'jwt' },
   providers: [
-    GitHub,
     Credentials({
       authorize: credentialsAuthorize,
+    }),
+    GitHub({
+      clientId: process.env.GITHUB_CLIENT_ID,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+    }),
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     }),
   ],
 });

@@ -13,9 +13,13 @@ import { FormError } from '@/components/shared/form-error';
 import { FormSuccess } from '@/components/shared/form-success';
 
 import { saLogin } from '@/server-action/sa-login';
+import { useSearchParams } from 'next/navigation';
 
 
 export function LoginForm() {
+  const searchParams = useSearchParams();
+  const errorParam = searchParams.get('error');
+  const urlError = errorParam === "OAuthAccountNotLinked" ? "Email already exists. Please login with your email and password." :  errorParam ? `${errorParam}` : undefined;
 
   const [error, setError] = useState<string | undefined>(undefined);
   const [success, setSuccess] = useState<string | undefined>(undefined);
@@ -73,7 +77,7 @@ export function LoginForm() {
 
           </div>
 
-          <FormError message={error}  />
+          <FormError message={error || urlError}  />
           <FormSuccess message={success}  />
 
           <Button type="submit" className="w-full" disabled={isPending}>

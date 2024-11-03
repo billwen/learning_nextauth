@@ -4,6 +4,7 @@ import { RegisterData, RegisterDataSchema } from '@/schema';
 import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
 import { getUserByEmail } from '@/data-service/user-data-service';
+import { generateVerificationToken } from '@/lib/tokens';
 
 export const saRegister = async (data: RegisterData) => {
   console.log(`Server Action: Register with ${JSON.stringify(data.email)}`);
@@ -33,6 +34,8 @@ export const saRegister = async (data: RegisterData) => {
   });
 
   // TODO: Send email verification with token
+  const verificationToken = await generateVerificationToken(email);
+  console.log(`Verification token: ${verificationToken}`);
 
-  return { success: 'User Created!' };
+  return { success: 'Confirmation email sent!' };
 };
