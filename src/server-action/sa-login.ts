@@ -6,6 +6,7 @@ import { DEFAULT_LOGGEDIN_REDIRECT } from '@/routes';
 import { AuthError } from 'next-auth';
 import { getUserByEmail } from '@/data-service/user-data-service';
 import { generateVerificationToken } from '@/lib/tokens';
+import { sendVerificationEmail } from '@/data-service/email-service';
 
 /**
  * Server action to log in a user.
@@ -33,7 +34,7 @@ export const saLogin = async (data: LoginData) => {
   // If the user hasn't verified their email, send a new verification email
   if (!existingUser.emailVerified) {
     const verificationToken = await generateVerificationToken(existingUser.email);
-    console.log(`Verification token: ${verificationToken}`);
+    await sendVerificationEmail(existingUser.email, verificationToken);
     return { success: 'Confirmation email sent!' };
   }
 

@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
 import { getUserByEmail } from '@/data-service/user-data-service';
 import { generateVerificationToken } from '@/lib/tokens';
+import { sendVerificationEmail } from '@/data-service/email-service';
 
 export const saRegister = async (data: RegisterData) => {
   console.log(`Server Action: Register with ${JSON.stringify(data.email)}`);
@@ -35,7 +36,7 @@ export const saRegister = async (data: RegisterData) => {
 
   // TODO: Send email verification with token
   const verificationToken = await generateVerificationToken(email);
-  console.log(`Verification token: ${verificationToken}`);
+  await sendVerificationEmail(email, verificationToken);
 
   return { success: 'Confirmation email sent!' };
 };

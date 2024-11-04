@@ -88,12 +88,25 @@ const linkAccountEvent: LinkAccountEvent = async ({ user, account }) => {
   return;
 };
 
-const signInCallback: SignInFunc = async ({ user }) => {
+const signInCallback: SignInFunc = async ({ user, account }) => {
   console.log(`sign in callback - ${JSON.stringify(user)}`);
   // const existingUser = await getUserById(user.id);
   // if (!existingUser || !existingUser.emailVerified) {
   //   return false;
   // }
+
+  // Allow OAuth without email verification
+  if (account?.provider !== 'credentials') {
+    return true;
+  }
+
+  const existingUser = await getUserById(user.id ?? '');
+  if (!existingUser?.emailVerified) {
+    // If the user hasn't verified their email, cannot sign in
+    return false;
+  }
+
+  // TODO: Add 2FA check here
 
   return true;
 };
