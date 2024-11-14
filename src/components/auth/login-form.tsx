@@ -14,6 +14,7 @@ import { FormSuccess } from '@/components/shared/form-success';
 
 import { saLogin } from '@/server-action/sa-login';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 
 
 export function LoginForm() {
@@ -71,6 +72,11 @@ export function LoginForm() {
               <FormItem>
                 <FormLabel>Password</FormLabel>
                 <FormControl><Input {...field} placeholder="******" type="password" disabled={isPending} /></FormControl>
+                <Button className="px-0 font-normal" size="sm" variant="link" asChild>
+                  <Link href="/auth/reset">
+                    Forgot password?
+                  </Link>
+                </Button>
                 <FormMessage />
               </FormItem>
             )} />

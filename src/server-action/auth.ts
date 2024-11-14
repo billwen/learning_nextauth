@@ -74,7 +74,7 @@ type SessionFunc = Callbacks['session'];
 type SignInFunc = Callbacks['signIn'];
 
 type Events = Required<NonNullable<AuthConfig['events']>>;
-type SignInEvent = Events['signIn'];
+export type SignInEvent = Events['signIn'];
 type LinkAccountEvent = Events['linkAccount'];
 
 const linkAccountEvent: LinkAccountEvent = async ({ user, account }) => {

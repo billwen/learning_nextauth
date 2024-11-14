@@ -14,3 +14,15 @@ export const RegisterDataSchema = z.object({
 });
 
 export type RegisterData = z.infer<typeof RegisterDataSchema>;
+
+export const ResetPasswordDataSchema = z.object({
+  email: z.string().email({ message: 'Email is required.' }),
+});
+
+export type ResetPasswordData = z.infer<typeof ResetPasswordDataSchema>;
+
+export const NewPasswordDataSchema = z.object({
+  password: z.string().min(6, { message: 'Minimum 6 characters required.' }),
+});
+
+export type NewPasswordData = z.infer<typeof NewPasswordDataSchema>;
