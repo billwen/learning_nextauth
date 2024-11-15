@@ -48,3 +48,18 @@ export async function sendPasswordResetEmail(email: string, token: string) {
     return console.error({ error });
   }
 }
+
+export async function sendTwoFactorEmail(email: string, token: string) {
+  const { error } = await resend.emails.send({
+    from: 'no-reply <no-reply@guludoc.com>',
+    to: email,
+    subject: '2FA Code',
+    html: `
+      <p>Your 2FA Code: ${token}</p>
+    `,
+  });
+
+  if (error) {
+    return console.error({ error });
+  }
+}

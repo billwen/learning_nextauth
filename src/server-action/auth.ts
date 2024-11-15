@@ -10,6 +10,7 @@ import { LoginData, LoginDataSchema } from '@/schema';
 import { getUserByEmail, getUserById } from '@/data-service/user-data-service';
 import { AuthConfig } from '@auth/core';
 import Google from '@auth/core/providers/google';
+import { getTwoFactorConfirmationByUserId } from '@/data-service/two-factor-service';
 
 /**
  * The offical solution to extend the session object.
@@ -107,6 +108,23 @@ const signInCallback: SignInFunc = async ({ user, account }) => {
   }
 
   // TODO: Add 2FA check here
+  if (existingUser?.isTwoFactorEnabled) {
+    // If 2FA is enabled, redirect to 2FA page
+    const twoFactorConfirmation = await getTwoFactorConfirmationByUserId(existingUser.id);
+    if (!twoFactorConfirmation) {
+      // If 2FA token is not found, redirect to 2FA page
+      return false;
+    }
+
+    // Delete the 2FA token for next sign in
+    await db.twoFactorConfirmation.delete({
+      where: {
+        id: twoFactorConfirmation.id,
+      },
+    });
+
+    return true;
+  }
 
   return true;
 };

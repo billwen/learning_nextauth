@@ -5,8 +5,10 @@ import { signIn } from '@/server-action/auth';
 import { DEFAULT_LOGGEDIN_REDIRECT } from '@/routes';
 import { AuthError } from 'next-auth';
 import { getUserByEmail } from '@/data-service/user-data-service';
-import { generateVerificationToken } from '@/lib/tokens';
-import { sendVerificationEmail } from '@/data-service/email-service';
+import { generateTwoFactorToken, generateVerificationToken } from '@/lib/tokens';
+import { sendTwoFactorEmail, sendVerificationEmail } from '@/data-service/email-service';
+import { getTwoFactorConfirmationByUserId, getTwoFactorTokenByEmail } from '@/data-service/two-factor-service';
+import { db } from '@/lib/db';
 
 /**
  * Server action to log in a user.
@@ -23,7 +25,7 @@ export const saLogin = async (data: LoginData) => {
     return { error: 'Invalid username and password combination!' };
   }
 
-  const { email, password } = validateFields.data as LoginData;
+  const { email, password, code } = validateFields.data as LoginData;
 
   const existingUser = await getUserByEmail(email);
   if (!existingUser || !existingUser.email || !existingUser.password) {
@@ -36,6 +38,53 @@ export const saLogin = async (data: LoginData) => {
     const verificationToken = await generateVerificationToken(existingUser.email);
     await sendVerificationEmail(existingUser.email, verificationToken);
     return { success: 'Confirmation email sent!' };
+  }
+
+  if (existingUser.isTwoFactorEnabled && existingUser.email) {
+    if (code) {
+      // Verify the two-factor code
+      const sentCode = await getTwoFactorTokenByEmail(existingUser.email);
+      if (!sentCode) {
+        return { error: 'Two-factor code not found!' };
+      }
+
+      if (sentCode.token !== code) {
+        return { error: 'Invalid two-factor code!' };
+      }
+
+      if (new Date(sentCode.expires) < new Date()) {
+        return { error: 'Two-factor code has expired!' };
+      }
+
+      await db.twoFactorToken.delete({
+        where: {
+          id: sentCode.id,
+        },
+      });
+
+      const existingConfirmation = await getTwoFactorConfirmationByUserId(existingUser.id);
+      if (existingConfirmation) {
+        await db.twoFactorConfirmation.delete({
+          where: {
+            id: existingConfirmation.id,
+          },
+        });
+      }
+
+      await db.twoFactorConfirmation.create({
+        data: {
+          userId: existingUser.id,
+        },
+      });
+
+      // Continue the normal sign in process
+    } else {
+      // No code provided, send a new two-factor code
+      const twoFactorToken = await generateTwoFactorToken(existingUser.email);
+      await sendTwoFactorEmail(existingUser.email, twoFactorToken);
+
+      return { twoFactor: true };
+    }
   }
 
   try {
