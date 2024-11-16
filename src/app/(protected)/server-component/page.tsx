@@ -1,9 +1,11 @@
 "use server";
 
+import { currentUser } from '@/lib/auth-lib';
+import { UserInfo } from '@/components/shared/user-info';
+
 export default async function ServerComponentDemoPage() {
+  const user = await currentUser();
   return (
-    <div>
-      <h1>Server Component Demo</h1>
-    </div>
+    <UserInfo user={user} label="Server component" />
   );
 }

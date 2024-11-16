@@ -7,15 +7,15 @@ import type { User, UserRole } from '@prisma/client';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import { db } from '@/lib/db';
 import { LoginData, LoginDataSchema } from '@/schema';
-import { getUserByEmail, getUserById } from '@/data-service/user-data-service';
+import { getAccountByUserId, getUserByEmail, getUserById } from '@/data-service/user-data-service';
 import { AuthConfig } from '@auth/core';
 import Google from '@auth/core/providers/google';
 import { getTwoFactorConfirmationByUserId } from '@/data-service/two-factor-service';
 
 /**
- * The offical solution to extend the session object.
+ * The official solution to extend the session object.
  * https://authjs.dev/getting-started/typescript
- * DOSN'T WORK
+ * DOESN'T WORK
  */
 
 // declare module "@auth/core" {
@@ -28,6 +28,8 @@ import { getTwoFactorConfirmationByUserId } from '@/data-service/two-factor-serv
 
 export type ExtendedUser = {
   role: UserRole;
+  twoFactorEnabled: boolean;
+  isOAuth: boolean;
 } & DefaultSession['user'];
 
 declare module 'next-auth' {
@@ -78,8 +80,8 @@ type Events = Required<NonNullable<AuthConfig['events']>>;
 export type SignInEvent = Events['signIn'];
 type LinkAccountEvent = Events['linkAccount'];
 
-const linkAccountEvent: LinkAccountEvent = async ({ user, account }) => {
-  console.log(`link account event - ${JSON.stringify(user)} - ${JSON.stringify(account)}`);
+const linkAccountEvent: LinkAccountEvent = async ({ user }) => {
+  //  console.log(`link account event - ${JSON.stringify(user)} - ${JSON.stringify(account)}`);
   await db.user.update({
     where: { id: user.id },
     data: {
@@ -130,7 +132,7 @@ const signInCallback: SignInFunc = async ({ user, account }) => {
 };
 
 const jwtCallback: JwtFunc = async (params) => {
-  console.log(`jwt callback - ${JSON.stringify(params)} `);
+  //  console.log(`jwt callback - ${JSON.stringify(params)} `);
   const token = params.token;
   if (!token.sub) {
     // User is logged out
@@ -143,12 +145,19 @@ const jwtCallback: JwtFunc = async (params) => {
     return token;
   }
 
+  const existingAccount = await getAccountByUserId(existingUser.id);
+
+  token.isOAuth = !!existingAccount;
+  token.name = existingUser.name;
+  token.email = existingUser.email;
   token.role = existingUser.role;
+  token.twoFactorEnabled = existingUser.isTwoFactorEnabled;
+
   return token;
 };
 
 const sessionCallback: SessionFunc = async ({ token, session }) => {
-  console.log(`session callback - ${JSON.stringify(token)}`);
+  //  console.log(`session callback - ${JSON.stringify(token)}`);
   if (token.sub && session.user) {
     // attach the user id to the session
     session.user.id = token.sub;
@@ -157,6 +166,10 @@ const sessionCallback: SessionFunc = async ({ token, session }) => {
   if (token.role && session.user) {
     // Extend the user role to the session
     session.user.role = token.role as UserRole;
+    session.user.name = token.name as string;
+    session.user.email = token.email as string;
+    session.user.twoFactorEnabled = token.twoFactorEnabled as boolean;
+    session.user.isOAuth = token.isOAuth as boolean;
   }
 
   return session;
