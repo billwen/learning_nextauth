@@ -6,11 +6,15 @@ import { Button } from '@/components/ui/button';
 import { signIn } from 'next-auth/react';
 import { DEFAULT_LOGGEDIN_REDIRECT } from '@/routes';
 
-export function Social() {
+interface SocialProps {
+  callbackUrl?: string | null;
+}
+
+export function Social({callbackUrl}: SocialProps) {
 
   const onClick = (provider: "google" | "github") => {
     signIn(provider, {
-      redirectTo: DEFAULT_LOGGEDIN_REDIRECT,
+      redirectTo: callbackUrl ?? DEFAULT_LOGGEDIN_REDIRECT,
     });
   };
 

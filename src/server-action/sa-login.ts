@@ -14,11 +14,12 @@ import { db } from '@/lib/db';
  * Server action to log in a user.
  * @param data
  *
+ * @param callbackUrl
  * @returns An object with an error message if the login fails.
  * @throws An error if an unexpected error occurs.
  */
-export const saLogin = async (data: LoginData) => {
-  console.log(`Server Action: Login with ${JSON.stringify(data.email)}`);
+export const saLogin = async (data: LoginData, callbackUrl?: string | null) => {
+  //  console.log(`Server Action: Login with ${JSON.stringify(data.email)}`);
 
   const validateFields = LoginDataSchema.safeParse(data);
   if (!validateFields.success) {
@@ -88,7 +89,7 @@ export const saLogin = async (data: LoginData) => {
   }
 
   try {
-    await signIn('credentials', { email, password, redirectTo: DEFAULT_LOGGEDIN_REDIRECT });
+    await signIn('credentials', { email, password, redirectTo: callbackUrl ?? DEFAULT_LOGGEDIN_REDIRECT });
     return { success: 'User Logged In!' };
   } catch (error: unknown) {
     if (error instanceof AuthError) {

@@ -48,7 +48,16 @@ export default auth((req) => {
     return NextResponse.next();
   }
 
-  return NextResponse.redirect(new URL(LOGIN_PAGE_URL, nextUrl), 302);
+  // Save the current URL to redirect back after login
+  let callbackUrl = nextUrl.pathname;
+  if (nextUrl.search) {
+    callbackUrl += nextUrl.search;
+  }
+
+  const encodedUrl = encodeURIComponent(callbackUrl);
+
+  // Redirect to login page
+  return NextResponse.redirect(new URL(`${LOGIN_PAGE_URL}?callbackUrl=${encodedUrl}`, nextUrl), 302);
 });
 
 export const config = {

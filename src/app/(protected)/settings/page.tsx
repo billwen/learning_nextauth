@@ -33,7 +33,7 @@ export default function SettingsPage() {
       password: undefined,
       newPassword: undefined,
       role: currentUser?.role ?? undefined,
-      isTwoFactorEnabled: currentUser?.isTwoFactorEnabled ?? undefined,
+      isTwoFactorEnabled: currentUser?.twoFactorEnabled ?? undefined,
     },
   });
 

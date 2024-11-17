@@ -20,6 +20,8 @@ import Link from 'next/link';
 export function LoginForm() {
   const searchParams = useSearchParams();
   const errorParam = searchParams.get('error');
+  const callbackUrl = searchParams.get('callbackUrl');
+  console.log(callbackUrl);
   const urlError = errorParam === "OAuthAccountNotLinked" ? "Email already exists. Please login with your email and password." :  errorParam ? `${errorParam}` : undefined;
 
   const [showTwoFactor, setShowTwoFactor] = useState<boolean>(false);
@@ -42,7 +44,7 @@ export function LoginForm() {
     setSuccess(undefined);
 
     startTransition(() => {
-      saLogin(values)
+      saLogin(values, callbackUrl)
         .then((data) => {
           if (data?.success) {
             form.reset();
@@ -70,7 +72,7 @@ export function LoginForm() {
   };
 
   return (
-    <CardWrapper headerLabel="Welcome back" backButtonLabel="Don't have an account?" backButtonHref="/auth/register" showSocial>
+    <CardWrapper headerLabel="Welcome back" backButtonLabel="Don't have an account?" backButtonHref="/auth/register" showSocial callbackUrl={callbackUrl}>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-4">
