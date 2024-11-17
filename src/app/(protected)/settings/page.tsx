@@ -8,11 +8,14 @@ import { useSession } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import { SettingsData, SettingsDataSchema } from '@/schema';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { FormError } from '@/components/shared/form-error';
 import { FormSuccess } from '@/components/shared/form-success';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { UserRole } from '@prisma/client';
+import { Switch } from '@/components/ui/switch';
 
 export default function SettingsPage() {
 
@@ -29,6 +32,8 @@ export default function SettingsPage() {
       email: currentUser?.email ?? undefined,
       password: undefined,
       newPassword: undefined,
+      role: currentUser?.role ?? undefined,
+      isTwoFactorEnabled: currentUser?.isTwoFactorEnabled ?? undefined,
     },
   });
 
@@ -79,6 +84,7 @@ export default function SettingsPage() {
                   <FormControl>
                     <Input {...field} placeholder="john.doe@example.com" type="email" disabled={isPending || currentUser?.isOAuth} />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )} />
 
@@ -88,6 +94,7 @@ export default function SettingsPage() {
                   <FormControl>
                     <Input {...field} placeholder="******" type="password" disabled={isPending || currentUser?.isOAuth} />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )} />
 
@@ -96,6 +103,37 @@ export default function SettingsPage() {
                   <FormLabel>New Password</FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="******" type="password" disabled={isPending || currentUser?.isOAuth} />
+                  </FormControl>
+                </FormItem>
+              )} />
+
+              <FormField control={form.control} name="role" render={({field}) => (
+                <FormItem>
+                  <FormLabel>Role</FormLabel>
+                  <Select disabled={isPending} onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a role" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                     <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
+                      <SelectItem value={UserRole.USER}>User</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )} />
+
+              <FormField control={form.control} name="isTwoFactorEnabled" render={({field}) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                  <div className="space-y-0.5">
+                    <FormLabel>2FA</FormLabel>
+                    <FormDescription>Enable two factor authentication for your account</FormDescription>
+                  </div>
+
+                  <FormControl>
+                    <Switch disabled={isPending} checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
                 </FormItem>
               )} />
