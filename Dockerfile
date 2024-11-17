@@ -6,10 +6,10 @@ WORKDIR /app
 
 # Install dependencies
 COPY package.json package-lock.json* ./
-RUN npm install --frozen-lockfile
 
 # Copy necessary files for building the app
 COPY . .
+RUN npm install --frozen-lockfile
 
 # Build the app (for Next.js v14, this supports new /app router structure)
 RUN npm run build
