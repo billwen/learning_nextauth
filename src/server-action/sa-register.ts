@@ -1,9 +1,11 @@
 'use server';
 
 import { RegisterData, RegisterDataSchema } from '@/schema';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
 import { getUserByEmail } from '@/data-service/user-data-service';
+import { generateVerificationToken } from '@/lib/tokens';
+import { sendVerificationEmail } from '@/data-service/email-service';
 
 export const saRegister = async (data: RegisterData) => {
   console.log(`Server Action: Register with ${JSON.stringify(data.email)}`);
@@ -27,13 +29,14 @@ export const saRegister = async (data: RegisterData) => {
   await db.user.create({
     data: {
       email,
-      salt,
       password: hashed,
       name,
     },
   });
 
   // TODO: Send email verification with token
+  const verificationToken = await generateVerificationToken(email);
+  await sendVerificationEmail(email, verificationToken);
 
-  return { success: 'User Created!' };
+  return { success: 'Confirmation email sent!' };
 };

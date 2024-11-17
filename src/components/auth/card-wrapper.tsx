@@ -11,9 +11,10 @@ interface CardWrapperProps {
   backButtonLabel: string;
   backButtonHref: string;
   showSocial?: boolean;
+  callbackUrl?: string | null;
 }
 
-export function CardWrapper({children, headerLabel, backButtonLabel, backButtonHref, showSocial}: CardWrapperProps) {
+export function CardWrapper({children, headerLabel, backButtonLabel, backButtonHref, showSocial, callbackUrl}: CardWrapperProps) {
   return (
     <Card className="w-[400px] shadow-md">
       <CardHeader>
@@ -25,7 +26,7 @@ export function CardWrapper({children, headerLabel, backButtonLabel, backButtonH
 
       {showSocial && (
         <CardFooter>
-          <Social />
+          <Social callbackUrl={callbackUrl} />
         </CardFooter>
       )}
 
