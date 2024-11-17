@@ -10,8 +10,6 @@ services:
       - "3000:3000"
     env_file:
       - .env
-    secrets:
-      - ghcr_token
     depends_on:
       - db
 
@@ -43,7 +41,3 @@ services:
 
 volumes:
     db_data:
-
-secrets:
-    ghcr_token:
-        external: true
