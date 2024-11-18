@@ -51,7 +51,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # <---important to support Prisma DB migrations in docker-bootstrap-app.sh
 COPY --chown=nextjs:nodejs prisma ./prisma/
 COPY --chown=nextjs:nodejs docker-bootstrap-app.sh ./
+RUN chmod +x ./docker-bootstrap-app.sh
 
 EXPOSE 3000
 USER nextjs
-CMD ["./docker-bootstrap-app.sh"]
+ENTRYPOINT ["./docker-bootstrap-app.sh"]
