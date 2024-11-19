@@ -16,11 +16,22 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: prod
 
     steps:
       # Check out the code
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+
+      - name: Bump Version & Push
+        if: github.event_name == 'push'
+        run: |
+          git config --local user.email "gangs-bot@guludoc.com"
+          git config --local user.name "Gangs Bot"
+          npm version patch --force
+          git push --tags
 
       - name: 'Dynamical variables'
         id: 'vars'
@@ -39,6 +50,8 @@ jobs:
             type=semver,pattern={{version}},value=${{ steps.vars.outputs.full_version }}
             type=semver,pattern={{major}}.{{minor}},value=${{ steps.vars.outputs.full_version }}
             type=semver,pattern={{major}},value=${{ steps.vars.outputs.full_version }}
+
+
 
       # Set up QEMU
       - name: Set up QEMU
