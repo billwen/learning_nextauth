@@ -34,10 +34,9 @@ jobs:
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
-      - name: 'Dynamical variables'
-        id: 'vars'
+      - name: 'Origin'
+        id: 'origin'
         run: |-
-          echo "full_version=v$(npm pkg get version | jq -r)" >> $GITHUB_OUTPUT
           echo "origin=https://${{ github.repository_owner }}:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/${{ github.repository }}" >> $GITHUB_OUTPUT
           
       - name: Bump Version & Push
@@ -45,9 +44,14 @@ jobs:
         run: |
           git config --local user.email "gangs-bot@guludoc.com"
           git config --local user.name "Gangs Bot"
-          git remote set-url origin ${{ steps.vars.outputs.origin }}
+          git remote set-url origin ${{ steps.origin.outputs.origin }}
           npm version patch --force -m "[ci skip] v%s"
           git push 
+
+      - name: 'Dynamical variables'
+        id: 'vars'
+        run: |-
+          echo "full_version=v$(npm pkg get version | jq -r)" >> $GITHUB_OUTPUT
 
       - name: 'GIT meta data'
         id: meta
