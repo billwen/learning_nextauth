@@ -26,6 +26,12 @@ jobs:
       - name: Debug
         run: echo "$GITHUB_CONTEXT"
 
+      - name: 'Dynamical variables'
+        id: 'vars'
+        run: |-
+          echo "full_version=v$(npm pkg get version | jq -r)" >> $GITHUB_OUTPUT
+          echo "origin=https://${{ github.repository_owner }}:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/${{ github.repository }}" >> $GITHUB_OUTPUT
+          
       # Check out the code
       - name: Checkout code
         uses: actions/checkout@v4
@@ -37,13 +43,9 @@ jobs:
         run: |
           git config --local user.email "gangs-bot@guludoc.com"
           git config --local user.name "Gangs Bot"
-          npm version patch --force
-          git push --tags
-
-      - name: 'Dynamical variables'
-        id: 'vars'
-        run: |-
-          echo "full_version=v$(npm pkg get version | jq -r)" >> $GITHUB_OUTPUT
+          git remote set-url origin ${{ steps.vars.outputs.origin }}
+          npm version patch --force -m "[ci skip] v%s"
+          git push 
 
       - name: 'GIT meta data'
         id: meta
