@@ -22,13 +22,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: 'Set variables'
-        id: 'vars'
-        run: |-
-          echo "dhstr=$(date +'%m-%d-%Y')-$(git rev-parse --short=4 HEAD)" > $GITHUB_OUTPUT
-          echo "full_version=v$(npm pkg get version | jq -r)" >> $GITHUB_OUTPUT
-          echo "major_version=v$(npm pkg get version | jq -r 'split(".") | first')" >> $GITHUB_OUTPUT
-          echo "minor_version=v$(npm pkg get version | jq -r 'split(".") | .[0:2] | join(".")')" >> $GITHUB_OUTPUT
+      - name: 'GIT meta data'
+        id: meta
+        uses: docker/metadata-action@v5
+        images: |
+          ${{ github.repository_owner }}/learning-nextauth
+          ghcr.io/${{ github.repository_owner }}/learning-nextauth
+        # generate Docker tags based on events and attributes
+        tags: |
+          type=sha
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=semver,pattern={{major}}
+          ${{ github.sha }}
+          ${{ github.ref }}
+          ${{ github.event_name }}
+          latest
+
+      # Set up QEMU
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
       # Set up Docker Buildx
       - name: Set up Docker Buildx
@@ -46,38 +59,23 @@ jobs:
 
       # Log in to GitHub Container Registry
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v2
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Docker Image
+      - name: Build and Push Docker Image
         if: github.event_name == 'pull_request'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
-          push: false
-          tags: 
-            - ghcr.io/${{ github.repository_owner }}/learning-nextauth:${{ steps.vars.outputs.dhstr }}
-            - ghcr.io/${{ github.repository_owner }}/learning-nextauth:${{ steps.vars.outputs.full_version }}
-            - ghcr.io/${{ github.repository_owner }}/learning-nextauth:${{ steps.vars.outputs.major_version }}
-            - ghcr.io/${{ github.repository_owner }}/learning-nextauth:${{ steps.vars.outputs.minor_version }}
-            - ghcr.io/${{ github.repository_owner }}/learning-nextauth:latest
-            - ghcr.io/${{ github.repository_owner }}/learning-nextauth:${{ github.sha }}
-
-      # Build and push the Docker image
-      - name: Push Docker Image
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ghcr.io/${{ github.repository_owner }}/learning-nextauth:latest, ghcr.io/${{ github.repository_owner }}/learning-nextauth:${{ github.sha }}
+          push: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
       # Example: You could add a second tag for GitHub SHA
       # tags: username/nextjs-app:latest,username/nextjs-app:${{ github.sha }}
