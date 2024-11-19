@@ -22,6 +22,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: 'Set variables'
+        id: 'vars'
+        run: |-
+          echo "dhstr=$(date +'%m-%d-%Y')-$(git rev-parse --short=4 HEAD)" > $GITHUB_OUTPUT
+          echo "full_version=v$(npm pkg get version | jq -r)" >> $GITHUB_OUTPUT
+          echo "major_version=v$(npm pkg get version | jq -r 'split(".") | first')" >> $GITHUB_OUTPUT
+          echo "minor_version=v$(npm pkg get version | jq -r 'split(".") | .[0:2] | join(".")')" >> $GITHUB_OUTPUT
+
       # Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -52,10 +60,16 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
           push: false
-          tags: ghcr.io/${{ github.repository_owner  }}/learning-nextauth:latest, ghcr.io/${{ github.repository_owner  }}/learning-nextauth:${{ github.sha }}
+          tags: 
+            - ghcr.io/${{ github.repository_owner }}/learning-nextauth:${{ steps.vars.outputs.dhstr }}
+            - ghcr.io/${{ github.repository_owner }}/learning-nextauth:${{ steps.vars.outputs.full_version }}
+            - ghcr.io/${{ github.repository_owner }}/learning-nextauth:${{ steps.vars.outputs.major_version }}
+            - ghcr.io/${{ github.repository_owner }}/learning-nextauth:${{ steps.vars.outputs.minor_version }}
+            - ghcr.io/${{ github.repository_owner }}/learning-nextauth:latest
+            - ghcr.io/${{ github.repository_owner }}/learning-nextauth:${{ github.sha }}
 
       # Build and push the Docker image
-      - name: Build and Push Docker Image
+      - name: Push Docker Image
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         uses: docker/build-push-action@v5
         with:
