@@ -15,21 +15,21 @@ function extractFileName(filePath: string | undefined | null) {
 }
 
 function errorLog(fileName: string, msg: string, meta?: Record<string, number | string | boolean>) {
-  const extractedFileName = extractFileName(fileName);
+  const extractedFileName = extractFileName(fileName) ?? '';
   if (!disabledDebug[extractedFileName]) {
     console.error(`[${new Date().toISOString()}|${instanceId}|${extractedFileName}] ${msg};`, meta ?? {});
   }
 }
 
 function infoLog(fileName: string, msg: string, meta?: Record<string, number | string | boolean>) {
-  const extractedFileName = extractFileName(fileName);
+  const extractedFileName = extractFileName(fileName) ?? '';
   if (!disabledDebug[fileName]) {
     console.info(`[${new Date().toISOString()}|${instanceId}|${extractedFileName}] ${msg};`, meta ?? {});
   }
 }
 
 function warnLog(fileName: string, msg: string, meta?: Record<string, number | string | boolean>) {
-  const extractedFileName = extractFileName(fileName);
+  const extractedFileName = extractFileName(fileName) ?? '';
   if (!disabledDebug[fileName]) {
     console.warn(`[${new Date().toISOString()}|${instanceId}|${extractedFileName}] ${msg};`, meta ?? {});
   }
