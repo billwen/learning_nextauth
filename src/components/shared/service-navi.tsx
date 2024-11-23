@@ -8,7 +8,7 @@ interface ServiceNaviProps {
 
 export function ServiceNavi({ services }: ServiceNaviProps) {
   return (
-    <div className="w-[768px] flex flex-row items-center justify-center gap-6">
+    <div className="flex flex-row items-center justify-center flex-wrap  gap-6">
       {
         services.map((service) => (
           <ServiceBlock service={service} key={service.name} />

@@ -24,7 +24,7 @@ export function ServiceBlock({ service }: ServiceBlockProps) {
           <h1 className="w-full text-center text-xl text-gray-800 font-semibold">
             {service.name}
           </h1>
-          <p className="w-full text-center text-sm text-gray-400 ">
+          <p className="w-full text-center text-sm text-gray-400 text-wrap ">
             {service.description}
           </p>
         </div>
