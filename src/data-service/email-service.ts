@@ -1,5 +1,7 @@
 import { Resend } from 'resend';
 
+import log from '@/utils/logger';
+
 if (!process.env.RESEND_API_KEY) {
   throw new Error('RESEND_API_KEY is required');
 }
@@ -11,6 +13,13 @@ if (!process.env.BASE_URL) {
 const resend = new Resend(process.env.RESEND_API_KEY);
 const baseUrl = process.env.BASE_URL;
 
+/**
+ * Send a verification email to the user.
+ * @param {string} email
+ * @param {string} token
+ *
+ * @throws {Error} - If an error occurs while sending the email.
+ */
 export async function sendVerificationEmail(email: string, token: string) {
   const confirmationLink = `${baseUrl}/auth/email-verification?token=${token}`;
 
@@ -25,10 +34,23 @@ export async function sendVerificationEmail(email: string, token: string) {
   });
 
   if (error) {
-    return console.error({ error });
+    log.error(__filename, `Send verification email failed, reason ${JSON.stringify(error)}`, {
+      metric: 'send_email',
+      module: 'verification',
+      status: 'failed',
+      details: JSON.stringify(error),
+    });
+    throw new Error(error.message);
   }
 
-  console.log({ data });
+  log.info(__filename, `Sending verification email to ${email}`, {
+    metric: 'send_email',
+    module: 'verification',
+    status: 'success',
+    details: JSON.stringify(data),
+  });
+
+  return;
 }
 
 export async function sendPasswordResetEmail(email: string, token: string) {

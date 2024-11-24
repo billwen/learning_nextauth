@@ -12,13 +12,19 @@ import { useCurrentUser } from '@/hooks/use-current-user';
 import { LogoutButton } from '@/components/auth/logout-button';
 import { ExitIcon } from '@radix-ui/react-icons';
 
-export function UserButton() {
+interface UserButtonProps {
+  size?: number;
+}
+
+export function UserButton({ size }: UserButtonProps) {
   const user = useCurrentUser();
 
+  const avatarClass = size ? `w-${size} h-${size}` : undefined;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>
-        <Avatar>
+        <Avatar className={avatarClass}>
+
           <AvatarImage src={user?.image ?? ""} />
           <AvatarFallback className="bg-sky-500">
             <FaUser className="text-white" />

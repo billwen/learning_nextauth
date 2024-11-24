@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { auth } from '@/server-action/auth';
 import { apiAuthPrefix, authRoutes, DEFAULT_LOGGEDIN_REDIRECT, LOGIN_PAGE_URL, publicRoutes } from '@/routes';
+import log from '@/utils/logger';
 
 // export function middleware(request: NextRequest) {
 //   const url = request.nextUrl;
@@ -22,7 +23,13 @@ import { apiAuthPrefix, authRoutes, DEFAULT_LOGGEDIN_REDIRECT, LOGIN_PAGE_URL, p
 
 export default auth((req) => {
   // req.auth
-  console.log('auth middleware - ', req.nextUrl.pathname);
+  log.info(__filename, `Request - ${req.nextUrl.pathname}`, {
+    metric: 'request',
+    module: 'middleware',
+    status: 'success',
+    details: '{}',
+  });
+
   const { nextUrl } = req;
   const isAuthenticated = !!req.auth;
 

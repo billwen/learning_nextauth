@@ -6,10 +6,18 @@ import { db } from '@/lib/db';
 import { getUserByEmail } from '@/data-service/user-data-service';
 import { generateVerificationToken } from '@/lib/tokens';
 import { sendVerificationEmail } from '@/data-service/email-service';
+import log from '@/utils/logger';
 
+/**
+ * Register a new user.
+ * @param data
+ *
+ * @returns {Promise<{error: string}>} - If the registration fails.
+ * @returns {Promise<{success: string}>} - If the registration is successful.
+ *
+ * All exceptions are caught and handled by the server.
+ */
 export const saRegister = async (data: RegisterData) => {
-  console.log(`Server Action: Register with ${JSON.stringify(data.email)}`);
-
   const validateFields = RegisterDataSchema.safeParse(data);
   if (!validateFields.success) {
     return { error: 'Invalid username and password combination!' };
@@ -34,9 +42,31 @@ export const saRegister = async (data: RegisterData) => {
     },
   });
 
-  // TODO: Send email verification with token
   const verificationToken = await generateVerificationToken(email);
-  await sendVerificationEmail(email, verificationToken);
 
+  try {
+    await sendVerificationEmail(email, verificationToken);
+  } catch (error) {
+    // Error happened while sending the email, start rollback
+    await db.user.delete({
+      where: {
+        email,
+      },
+    });
+    log.error(__filename, `User registered failed, reason ${JSON.stringify(error)}`, {
+      metric: 'register',
+      module: 'auth',
+      status: 'failed',
+      details: JSON.stringify(error),
+    });
+    return { error: 'Internal Error, please try it again!' };
+  }
+
+  log.info(__filename, `User registered: ${email}`, {
+    metric: 'register',
+    module: 'auth',
+    status: 'success',
+    details: JSON.stringify({ email, name }),
+  });
   return { success: 'Confirmation email sent!' };
 };

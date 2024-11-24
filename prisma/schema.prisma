@@ -30,8 +30,15 @@ model User {
   isTwoFactorEnabled    Boolean                @default(false)
   twoFactorConfirmation TwoFactorConfirmation?
 
-  accounts      Account[]
-  sessions      Session[]
+  accounts Account[]
+  sessions Session[]
+
+  workflows           Workflow[]
+  executions          WorkflowExecution[]
+  executionPhases     WorkflowExecutionPhase[]
+  workflowUserBalance WorkflowUserBalance?
+  WorkflowPurchase    WorkflowPurchase[]
+
   role          UserRole        @default(USER)
   // Optional for WebAuthn support
   Authenticator Authenticator[]
@@ -121,4 +128,100 @@ model Authenticator {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, credentialID])
+}
+
+// Flow Data
+model Workflow {
+  id String @id @default(cuid())
+
+  userId     String
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  executions WorkflowExecution[]
+
+  name          String
+  description   String?
+  definition    String
+  executionPlan String
+  cron          String
+  status        String
+  creditsCost   Int
+  lastRunAt     DateTime?
+  lastRunId     String?
+  nextRunAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model WorkflowExecution {
+  id String @id @default(cuid())
+
+  workflowId String
+  workflow   Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  userId          String
+  user            User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  executionPhases WorkflowExecutionPhase[]
+
+  trigger String
+  status  String
+
+  createdAt       DateTime  @default(now())
+  startedAt       DateTime?
+  completedAt     DateTime?
+  updatedAt       DateTime  @updatedAt
+  creditsConsumed Int
+}
+
+model WorkflowExecutionPhase {
+  id String @id @default(cuid())
+
+  userId        String
+  user          User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  executionLogs WorkflowExecutionLog[]
+
+  status          String
+  number          Int
+  node            String
+  name            String
+  startedAt       DateTime?
+  completedAt     DateTime?
+  inputs          String
+  outputs         String
+  creditsConsumed Int
+
+  workflowExecutionId String
+  workflowExecution   WorkflowExecution @relation(fields: [workflowExecutionId], references: [id], onDelete: Cascade)
+}
+
+model WorkflowExecutionLog {
+  id String @id @default(cuid())
+
+  executionPhaseId String
+  executionPhase   WorkflowExecutionPhase @relation(fields: [executionPhaseId], references: [id], onDelete: Cascade)
+
+  logLevel  String
+  message   String
+  timestamp DateTime
+}
+
+model WorkflowUserBalance {
+  id Int @id @default(autoincrement())
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  credits Int @default(0)
+}
+
+model WorkflowPurchase {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  stripeId    String
+  description String
+  amount      Int
+  currency    String
+  date        DateTime
 }
