@@ -134,22 +134,29 @@ model Authenticator {
 model Workflow {
   id String @id @default(cuid())
 
-  userId     String
-  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  executions WorkflowExecution[]
+  userId      String
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
 
-  name          String
-  description   String?
-  definition    String
+  definition String
+  status     String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   executionPlan String
   cron          String
-  status        String
-  creditsCost   Int
-  lastRunAt     DateTime?
-  lastRunId     String?
-  nextRunAt     DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+
+  creditsCost Int
+  lastRunAt   DateTime?
+  lastRunId   String?
+  nextRunAt   DateTime?
+
+  executions WorkflowExecution[]
+
+  // User cannot have two workflows with the same name
+  @@unique([userId, name])
 }
 
 model WorkflowExecution {
