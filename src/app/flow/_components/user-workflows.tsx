@@ -1,6 +1,7 @@
 import { getWorkflowsByCurrentUser } from '@/server-action/sa-workflows';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, InboxIcon } from 'lucide-react';
+import { CreateWorkflowDialog } from '@/app/flow/(dashboard)/workflows/_components/create-workflow-dialog';
 
 
 export async function UserWorkflows() {
@@ -21,6 +22,8 @@ export async function UserWorkflows() {
               Click the button below to create your first workflow
             </p>
           </div>
+
+          <CreateWorkflowDialog triggerText="Create your first workflow" />
         </div>
       );
     }
