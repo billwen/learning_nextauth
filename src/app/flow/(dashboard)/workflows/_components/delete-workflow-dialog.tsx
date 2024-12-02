@@ -8,16 +8,31 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { deleteWorkflow } from '@/server-action/sa-workflows';
+import { toast } from 'sonner';
 
 
 interface DeleteWorkflowDialogProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   workflowName: string;
+  workflowId: string;
 }
 
-export function DeleteWorkflowDialog({ open, setOpen, workflowName }: DeleteWorkflowDialogProps) {
+export function DeleteWorkflowDialog({ open, setOpen, workflowName, workflowId }: DeleteWorkflowDialogProps) {
   const [confirmText, setConfirmText] = useState<string | undefined>(undefined);
+
+  const {isPending, mutate} = useMutation({
+    mutationFn: deleteWorkflow,
+    onError: () => {
+      toast.error('Failed to delete workflow', { id: workflowId });
+      setConfirmText('');
+    },
+    onSuccess: () => {
+      toast.success('Workflow deleted successfully', { id: workflowId });
+    },
+  });
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
@@ -34,8 +49,18 @@ export function DeleteWorkflowDialog({ open, setOpen, workflowName }: DeleteWork
         </AlertDialogHeader>
 
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction disabled={confirmText !== workflowName} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+          <AlertDialogCancel onClick={() => setConfirmText("")}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={confirmText !== workflowName || isPending}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={(e) => {
+              e.stopPropagation();
+              toast.loading('Deleting workflow...', { id: workflowId });
+              mutate(workflowId);
+            }}
+          >
+            Delete
+          </AlertDialogAction>
         </AlertDialogFooter>
 
       </AlertDialogContent>

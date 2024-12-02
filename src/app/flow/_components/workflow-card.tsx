@@ -31,7 +31,7 @@ export function WorkflowCard({ workflow }: WorkflowCardProps) {
 
           <div>
             <h3 className="text-base font-bold text-muted-foreground flex items-center">
-              <Link href={`/flow/workflows/editor/${workflow.id}`}
+              <Link href={`/flow/workflow/editor/${workflow.id}`}
                     className="flex items-center hover:underline">{workflow.name}</Link>
               {isDraft && (
                 <span
@@ -42,13 +42,13 @@ export function WorkflowCard({ workflow }: WorkflowCardProps) {
         </div>
 
         <div className="flex items-center space-x-2">
-          <Link href={`/flow/workflows/editor/${workflow.id}`} className={cn(buttonVariants({
+          <Link href={`/flow/workflow/editor/${workflow.id}`} className={cn(buttonVariants({
             variant: 'outline',
             size: 'sm',
           }), "flex items-center gap-2")}>
             <ShuffleIcon size={16} /> Edit
           </Link>
-          <WorkflowActions name={workflow.name} />
+          <WorkflowActions name={workflow.name} id={workflow.id} />
         </div>
       </CardContent>
     </Card>

@@ -14,13 +14,14 @@ import { DeleteWorkflowDialog } from '@/app/flow/(dashboard)/workflows/_componen
 
 interface WorkflowActionsProps {
   name: string;
+  id: string;
 }
 
-export function WorkflowActions({ name }: WorkflowActionsProps) {
+export function WorkflowActions({ name, id }: WorkflowActionsProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   return (
     <>
-      <DeleteWorkflowDialog setOpen={setShowDeleteDialog} open={showDeleteDialog} workflowName={name} />
+      <DeleteWorkflowDialog setOpen={setShowDeleteDialog} open={showDeleteDialog} workflowName={name} workflowId={id} />
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

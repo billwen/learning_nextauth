@@ -5,6 +5,7 @@ import { auth } from '@/server-action/auth';
 import log from '@/utils/logger';
 import { CreateWorkflowData, CreateWorkflowSchema, WorkflowStatus } from '@/schema/flow-schema';
 import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
 
 export async function getWorkflowsByCurrentUser() {
   const session = await auth();
@@ -20,6 +21,22 @@ export async function getWorkflowsByCurrentUser() {
     },
     orderBy: {
       createdAt: 'asc',
+    },
+  });
+}
+
+export async function getWorkflowById(id: string) {
+  const session = await auth();
+
+  if (!session || !session.user) {
+    log.error(__filename, 'Unauthorized - get workflow, no session or session.user');
+    throw new Error('Unauthorized');
+  }
+
+  return db.workflow.findUnique({
+    where: {
+      id,
+      userId: session.user.id,
     },
   });
 }
@@ -56,4 +73,28 @@ export async function createWorkflow(form: CreateWorkflowData) {
 
   // Redirect to the workflow page
   redirect(`/flow/workflows/editor/${result.id}`);
+}
+
+export async function deleteWorkflow(id: string) {
+  // Validate user
+  const session = await auth();
+
+  if (!session || !session.user) {
+    log.error(__filename, 'Unauthorized - delete workflow, no session or session.user');
+    throw new Error('Unauthorized');
+  }
+
+  const result = await db.workflow.delete({
+    where: {
+      id,
+      userId: session.user.id,
+    },
+  });
+
+  if (!result) {
+    log.error(__filename, 'Failed to delete workflow');
+    throw new Error('Failed to delete workflow');
+  }
+
+  revalidatePath(`/flow/workflows`);
 }
